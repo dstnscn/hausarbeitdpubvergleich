@@ -1,0 +1,45 @@
+services:
+  db:
+    image: mysql:8.4.3
+    container_name: mysql-trinknix
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_USER: trinknix
+      MYSQL_PASSWORD: ordix
+      MYSQL_ROOT_PASSWORD: trinknix
+      MYSQL_DATABASE: drinkapp
+    volumes:
+      - db_backup:/var/lib/mysql
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - shared-network
+
+  fastapi:
+    container_name: fastapi-trinknix
+    image: docker-nexus.ordix.de/trinknix/march/fastapi:1.0.3
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app
+    networks:
+      - shared-network
+
+  nginx:
+    container_name: nginx-trinknix
+    image: docker-nexus.ordix.de/trinknix/march/nginx:1.0.3
+    depends_on:
+      - db
+    ports:
+      - "0.0.0.0:80:80"
+    networks:
+      - shared-network
+
+volumes:
+  db_backup:
+
+networks:
+  shared-network:
+    driver: bridge
